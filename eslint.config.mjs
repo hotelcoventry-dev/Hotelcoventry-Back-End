@@ -88,7 +88,6 @@ export default tseslint.config(
           tabWidth: 2,
           semi: true,
           bracketSpacing: true,
-          arrowParens: 'avoid',
         },
       ],
     },

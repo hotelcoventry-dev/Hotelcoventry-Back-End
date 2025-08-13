@@ -44,7 +44,7 @@ async function bootstrap(): Promise<void> {
 
   logger.log(`🚀 Frontend corriendo en `);
   logger.log(`📚 Swagger en `);
-  logger.log(`📚 Swagger en http://localhost:3000/api/docs`);
+  logger.log(`📚 Swagger en http://localhost:3001/api/docs`);
 }
 
 bootstrap().catch((error) => {

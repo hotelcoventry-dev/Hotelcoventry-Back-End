@@ -28,10 +28,10 @@ export class RoleGuard extends AuthGuard implements CanActivate {
 
     const hasRequiredRole = roles.some((role) => {
       switch (role) {
-        case UserRole.ENCARGADO:
-          return user.isEncargado;
-        case UserRole.CONSERGE:
-          return user.isConserge || user.isEncargado;
+        case UserRole.MANAGER:
+          return user.isManager;
+        case UserRole.RECEPTIONIST:
+          return user.isReceptionist || user.isManager;
         default:
           return false;
       }
@@ -41,10 +41,10 @@ export class RoleGuard extends AuthGuard implements CanActivate {
       const roleNames = roles
         .map((rol) => {
           switch (rol) {
-            case UserRole.ENCARGADO:
-              return 'Encargado';
-            case UserRole.CONSERGE:
-              return 'Conserge';
+            case UserRole.MANAGER:
+              return 'receptionist';
+            case UserRole.RECEPTIONIST:
+              return 'manager';
             default:
               return rol;
           }

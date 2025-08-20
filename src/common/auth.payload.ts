@@ -1,8 +1,8 @@
 export interface JwtPayload {
   sub: string;
   name: string;
-  isConserge?: boolean;
-  isEncargado?: boolean;
+  isReceptionist?: boolean;
+  isManager?: boolean;
   exp: number;
   iat?: number;
 }

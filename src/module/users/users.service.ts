@@ -127,13 +127,7 @@ export class UsersService {
 
   async createUserService(dto: CreateUserDbDto): Promise<Users> {
     try {
-      let user: Users;
-      if (dto.address) {
-        const address = this.addressRepository.create(dto.address);
-        user = this.usersRepository.create({ ...dto, address });
-      } else {
-        user = this.usersRepository.create(dto);
-      }
+      const user = this.usersRepository.create(dto);
       return await this.usersRepository.save(user);
     } catch (error) {
       if (error instanceof BadRequestException) {

@@ -14,15 +14,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiBody,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { UsersService } from './users.service';
 import { Roles, UserRole } from 'src/decorator/role.decorator';
@@ -49,16 +41,16 @@ import { ResetPasswordDto } from './Dtos/reset-password.dto';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @ApiOperation({ summary: 'Get all users for newsletter' })
+  @ApiOperation({ summary: 'find all' })
   @UseGuards(AuthGuard, RoleGuard)
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.Manager)
   @ApiResponse({
     status: 200,
-    description: 'Find all users to send newsletter',
+    description: 'Find all',
   })
-  @Get('all/newsletter')
+  @Get('all')
   async findAll(): Promise<Users[]> {
-    return this.usersService.findAll();
+    return await this.usersService.findAll();
   }
 
   @ApiOperation({
@@ -82,9 +74,7 @@ export class UsersController {
   @UseGuards(AuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN)
   @Get()
-  async getUsers(
-    @Query() searchQuery: UserSearchQueryDto,
-  ): Promise<PaginatedUsersDto> {
+  async getUsers(@Query() searchQuery: UserSearchQueryDto): Promise<PaginatedUsersDto> {
     const { items, ...meta } = await this.usersService.getUsers(searchQuery);
     return { ...meta, items: ResponseUserWithAdminDto.toDTOList(items) };
   }
@@ -92,10 +82,7 @@ export class UsersController {
   @Patch('password')
   @ApiOperation({ summary: 'Update password' })
   @UseGuards(AuthGuard)
-  async changeOwnPassword(
-    @Req() req: AuthenticatedRequest,
-    @Body() dto: UpdatePasswordDto,
-  ) {
+  async changeOwnPassword(@Req() req: AuthenticatedRequest, @Body() dto: UpdatePasswordDto) {
     await this.usersService.changePassword(req.user.sub, dto);
     return { message: 'Contraseña actualizada correctamente' };
   }
@@ -105,20 +92,15 @@ export class UsersController {
   @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: 200, description: 'OK', type: ResponseUserDto })
   @UseGuards(AuthGuard)
-  async getUserById(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ResponseUserDto> {
+  async getUserById(@Param('id', ParseUUIDPipe) id: string): Promise<ResponseUserDto> {
     return ResponseUserDto.toDTO(await this.usersService.getUserById(id));
   }
 
   @Patch('Roles/:id')
   @ApiOperation({ summary: 'Role change by ID' })
   @UseGuards(AuthGuard, RoleGuard)
-  @Roles(UserRole.SUPER_ADMIN)
-  async rollChange(
-    @Param('id', ParseUUIDPipe) userId: string,
-    @Body() dto: UpdateRoleDto,
-  ) {
+  @Roles(UserRole.Manager)
+  async rollChange(@Param('id', ParseUUIDPipe) userId: string, @Body() dto: UpdateRoleDto) {
     const userRole = await this.usersService.rollChange(userId, dto);
     return { message: 'Los roles se actualizaron correctamente', userRole };
   }
@@ -129,14 +111,8 @@ export class UsersController {
   @ApiBody({ type: UpdateUserDbDto })
   @UseGuards(AuthGuard)
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-  async updateUser(
-    @Req() req: AuthenticatedRequest,
-    @Body() updateData: UpdateUserDbDto,
-  ): Promise<IUserResponseDto> {
-    const user = await this.usersService.updateUserService(
-      req.user.sub,
-      updateData,
-    );
+  async updateUser(@Req() req: AuthenticatedRequest, @Body() updateData: UpdateUserDbDto): Promise<IUserResponseDto> {
+    const user = await this.usersService.updateUserService(req.user.sub, updateData);
     return ResponseUserDto.toDTO(user);
   }
 
@@ -175,9 +151,7 @@ export class UsersController {
     description: 'User successfully restored',
     type: ResponseUserDto,
   })
-  async restoreUser(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ResponseUserDto> {
+  async restoreUser(@Param('id', ParseUUIDPipe) id: string): Promise<ResponseUserDto> {
     const user = await this.usersService.restoreUser(id);
     return ResponseUserDto.toDTO(user);
   }

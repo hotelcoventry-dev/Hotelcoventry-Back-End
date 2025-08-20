@@ -25,8 +25,8 @@ export class AuthGuard implements CanActivate {
       request.user = {
         sub: payload.sub,
         name: payload.name,
-        isConserge: payload.isConserge || false,
-        isEncargado: payload.isEncargado || false,
+        isManager: payload.isManager || false,
+        isReceptionist: payload.isReceptionist || false,
         exp: payload.exp,
         iat: payload.iat,
       };

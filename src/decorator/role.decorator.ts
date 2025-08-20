@@ -1,8 +1,8 @@
 import { SetMetadata, CustomDecorator } from '@nestjs/common';
 
 export enum UserRole {
-  CONSERGE = 'conserge',
-  ENCARGADO = 'encargado',
+  RECEPTIONIST = 'receptionist',
+  MANAGER = 'manager',
 }
 
 export const Roles = (...roles: UserRole[]): CustomDecorator<string> => SetMetadata('roles', roles);

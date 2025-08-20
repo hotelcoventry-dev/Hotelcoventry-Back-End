@@ -2,7 +2,11 @@
 /dist
 /node_modules
 /build
-/package-lock.json
+
+# Lockfiles de npm
+package-lock.json
+**/package-lock.json
+
 
 # Logs
 logs

@@ -31,11 +31,16 @@ export class BookingService {
       throw new Error('La habitación no está disponible');
     }
 
+    if (dto.Personas > room.capacidad) {
+      throw new Error(`La habitación solo admite hasta ${room.capacidad} personas`);
+    }
+
     const booking = this.bookingRepo.create({
       fechaReserva: dto.fechaReserva,
       fechaIngreso: dto.fechaIngreso,
       fechaSalida: dto.fechaSalida,
-      sena: dto.sena,
+      deposit: dto.deposit,
+      Personas: dto.Personas,
       client,
       room,
       estado: EstadoReserva.RESERVADA,
@@ -46,31 +51,42 @@ export class BookingService {
 
     return await this.bookingRepo.save(booking);
   }
+  async findAll(
+    estado?: EstadoReserva,
+    page = 1,
+    limit = 10,
+  ): Promise<{ data: Booking[]; total: number; page: number; limit: number }> {
+    const query = this.bookingRepo
+      .createQueryBuilder('booking')
+      .leftJoinAndSelect('booking.client', 'client')
+      .leftJoinAndSelect('booking.room', 'room');
 
-  async findAll(): Promise<Booking[]> {
-    return await this.bookingRepo.find({ relations: ['client', 'room'] });
+    if (estado) {
+      query.andWhere('booking.estado = :estado', { estado });
+    }
+
+    const [data, total] = await query
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return { data, total, page, limit };
   }
 
   async findOne(id: number): Promise<Booking> {
-    const booking = await this.bookingRepo.findOne({ where: { id }, relations: ['client', 'room'] });
+    const booking = await this.bookingRepo.findOne({
+      where: { id },
+      relations: ['client', 'room'],
+    });
     if (!booking) throw new NotFoundException('Reserva no encontrada');
     return booking;
   }
 
-  async findByClient(clientId: number): Promise<Booking[]> {
-    const client = await this.clientRepo.findOneBy({ id: clientId });
-    if (!client) {
-      throw new NotFoundException('Cliente no encontrado');
-    }
-
-    return await this.bookingRepo.find({
-      where: { client },
-      relations: ['client', 'room'],
-    });
-  }
-
   async cancel(id: number, dto: CancelBookingDto): Promise<Booking> {
-    const booking = await this.bookingRepo.findOne({ where: { id }, relations: ['room'] });
+    const booking = await this.bookingRepo.findOne({
+      where: { id },
+      relations: ['room'],
+    });
     if (!booking) throw new NotFoundException('Reserva no encontrada');
 
     booking.estado = EstadoReserva.CANCELADA;
@@ -80,5 +96,15 @@ export class BookingService {
     await this.roomRepo.save(booking.room);
 
     return await this.bookingRepo.save(booking);
+  }
+
+  async findByClient(clienteId: number): Promise<Booking[]> {
+    const client = await this.clientRepo.findOne({ where: { id: clienteId } });
+    if (!client) throw new NotFoundException('Cliente no encontrado');
+
+    return await this.bookingRepo.find({
+      where: { client },
+      relations: ['client', 'room'],
+    });
   }
 }

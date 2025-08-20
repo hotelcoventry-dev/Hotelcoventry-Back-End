@@ -10,8 +10,14 @@ export class Users {
   @Column({ type: 'varchar', length: 50, unique: true, nullable: false })
   username: string;
 
+  @Column({ type: 'bigint', nullable: false, unique: true })
+  EmployeeNumber: number;
+
   @Column({ type: 'varchar', length: 255, nullable: false })
   password: string;
+
+  @Column({ type: 'boolean', default: false })
+  isReceptionist: boolean;
 
   @Column({ type: 'boolean', default: false })
   isManager: boolean;

@@ -12,7 +12,6 @@ import {
   Req,
   Delete,
   Patch,
-  Post,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
@@ -29,11 +28,8 @@ import {
 import { UpdateUserDbDto } from './Dtos/CreateUserDto';
 import { UserSearchQueryDto } from './Dtos/PaginationQueryDto';
 import { PaginatedUsersDto } from './Dtos/paginated-users.dto';
-import { UpdatePasswordDto } from './Dtos/UpdatePasswordDto';
 import { UpdateRoleDto } from './Dtos/UpdateRoleDto';
 import { Users } from './Entyties/users.entity';
-import { ForgotPasswordDto } from './Dtos/forgot-password.dto';
-import { ResetPasswordDto } from './Dtos/reset-password.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -43,7 +39,7 @@ export class UsersController {
 
   @ApiOperation({ summary: 'find all' })
   @UseGuards(AuthGuard, RoleGuard)
-  @Roles(UserRole.Manager)
+  @Roles(UserRole.MANAGER)
   @ApiResponse({
     status: 200,
     description: 'Find all',
@@ -64,27 +60,13 @@ export class UsersController {
     type: String,
     description: 'Username to search for users',
   })
-  @ApiQuery({
-    name: 'email',
-    required: false,
-    type: String,
-    description: 'Email to search for users',
-  })
   @ApiResponse({ status: 200, description: 'OK', type: PaginatedUsersDto })
   @UseGuards(AuthGuard, RoleGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.MANAGER)
   @Get()
   async getUsers(@Query() searchQuery: UserSearchQueryDto): Promise<PaginatedUsersDto> {
     const { items, ...meta } = await this.usersService.getUsers(searchQuery);
     return { ...meta, items: ResponseUserWithAdminDto.toDTOList(items) };
-  }
-
-  @Patch('password')
-  @ApiOperation({ summary: 'Update password' })
-  @UseGuards(AuthGuard)
-  async changeOwnPassword(@Req() req: AuthenticatedRequest, @Body() dto: UpdatePasswordDto) {
-    await this.usersService.changePassword(req.user.sub, dto);
-    return { message: 'Contraseña actualizada correctamente' };
   }
 
   @Get(':id')
@@ -99,17 +81,23 @@ export class UsersController {
   @Patch('Roles/:id')
   @ApiOperation({ summary: 'Role change by ID' })
   @UseGuards(AuthGuard, RoleGuard)
-  @Roles(UserRole.Manager)
-  async rollChange(@Param('id', ParseUUIDPipe) userId: string, @Body() dto: UpdateRoleDto) {
-    const userRole = await this.usersService.rollChange(userId, dto);
-    return { message: 'Los roles se actualizaron correctamente', userRole };
+  @Roles(UserRole.MANAGER)
+  async rollChangeUser(
+    @Param('id', ParseUUIDPipe) userId: string,
+    @Body() dto: UpdateRoleDto,
+  ): Promise<{
+    message: string;
+  }> {
+    await this.usersService.rollChange(userId, dto);
+    return { message: 'Los roles se actualizaron correctamente' };
   }
 
   @Put('update/user')
   @ApiOperation({ summary: 'Update user information' })
   @ApiParam({ name: 'id', type: String })
   @ApiBody({ type: UpdateUserDbDto })
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles(UserRole.MANAGER)
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   async updateUser(@Req() req: AuthenticatedRequest, @Body() updateData: UpdateUserDbDto): Promise<IUserResponseDto> {
     const user = await this.usersService.updateUserService(req.user.sub, updateData);
@@ -133,13 +121,13 @@ export class UsersController {
   })
   @UseGuards(AuthGuard)
   @Delete(':id')
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string): Promise<{ message: string }> {
     return await this.usersService.deleteUser(id);
   }
 
   @Patch('restore/:id')
   @UseGuards(AuthGuard, RoleGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.MANAGER)
   @ApiOperation({ summary: 'Restore deleted user (soft delete)' })
   @ApiParam({
     name: 'id',
@@ -154,31 +142,5 @@ export class UsersController {
   async restoreUser(@Param('id', ParseUUIDPipe) id: string): Promise<ResponseUserDto> {
     const user = await this.usersService.restoreUser(id);
     return ResponseUserDto.toDTO(user);
-  }
-
-  @Post('forgot-password')
-  @ApiOperation({ summary: 'Request password recovery' })
-  @ApiBody({ type: ForgotPasswordDto })
-  @ApiResponse({
-    status: 200,
-    description: 'If the email exists, a reset link is sent.',
-  })
-  async forgotPassword(@Body() dto: ForgotPasswordDto) {
-    await this.usersService.sendResetPasswordEmail(dto.email);
-    return {
-      message: 'If the email exists, the password reset link has been sent.',
-    };
-  }
-
-  @Post('reset-password')
-  @ApiOperation({ summary: 'Reset password using email token' })
-  @ApiBody({ type: ResetPasswordDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Password reset successfully',
-  })
-  async resetPassword(@Body() dto: ResetPasswordDto) {
-    await this.usersService.resetPassword(dto);
-    return { message: 'Password reset successfully' };
   }
 }

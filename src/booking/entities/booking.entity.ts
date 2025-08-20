@@ -27,11 +27,14 @@ export class Booking {
   @Column({ type: 'date' })
   fechaSalida: Date;
 
+  @Column()
+  Personas: number;
+
   @Column({ type: 'enum', enum: EstadoReserva, default: EstadoReserva.RESERVADA })
   estado: EstadoReserva;
 
   @Column('decimal', { precision: 10, scale: 2 })
-  sena: number;
+  deposit: number;
 
   @Column({ nullable: true })
   motivoCancelacion?: string;

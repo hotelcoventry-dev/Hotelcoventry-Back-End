@@ -37,6 +37,11 @@ export class CreateBookingDto {
   @IsDateString()
   fechaSalida: Date;
 
+  @ApiProperty({ example: '3', description: 'numero de personas que se hospedaran' })
   @IsNumber()
-  sena: number;
+  Personas: number;
+
+  @ApiProperty({ example: '259.000$', description: 'monto de la reserva ya pago' })
+  @IsNumber()
+  deposit: number;
 }

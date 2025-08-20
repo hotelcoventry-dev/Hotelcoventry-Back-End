@@ -18,6 +18,9 @@ export class Room {
   @Column()
   tipo: string;
 
+  @Column()
+  capacidad: number;
+
   @Column({ type: 'enum', enum: EstadoHabitacion, default: EstadoHabitacion.LIBERADA })
   estado: EstadoHabitacion;
 

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsEnum, IsOptional } from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsOptional, Min } from 'class-validator';
 import { EstadoHabitacion } from '../entities/room.entity';
 
 export class CreateRoomDto {
@@ -14,6 +14,11 @@ export class CreateRoomDto {
   @ApiProperty({ example: 2, description: 'Maximum number of people the room can accommodate' })
   @IsNumber()
   capacidad: number;
+
+  @ApiProperty({ example: 100.0, description: 'Price per night for the room' })
+  @IsNumber()
+  @Min(0)
+  precioPorNoche: number;
 
   @ApiProperty({
     example: EstadoHabitacion.LIBERADA,

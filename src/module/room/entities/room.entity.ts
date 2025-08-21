@@ -21,6 +21,9 @@ export class Room {
   @Column()
   capacidad: number;
 
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  precioPorNoche: number;
+
   @Column({ type: 'enum', enum: EstadoHabitacion, default: EstadoHabitacion.LIBERADA })
   estado: EstadoHabitacion;
 

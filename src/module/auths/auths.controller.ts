@@ -1,5 +1,5 @@
 import { Body, Controller, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 
 import { AuthsService } from './auths.service';
@@ -33,6 +33,7 @@ export class AuthsController {
     return await this.authService.signin(credentials.EmployeeNumber, credentials.password);
   }
 
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Sign up new user' })
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({

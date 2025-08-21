@@ -51,7 +51,7 @@ export class AuthsService {
       const createdUser = await this.userService.createUserService({
         ...userData,
         password: hashedPassword,
-        isReceptionist: false,
+        isReceptionist: true,
         isManager: false,
       });
 

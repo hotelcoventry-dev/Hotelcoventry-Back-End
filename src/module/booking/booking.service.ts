@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Booking, EstadoReserva } from './entities/booking.entity';
@@ -48,29 +48,47 @@ export class BookingService {
 
       client = found;
     } else {
-      throw new Error('Debe proporcionar clientId o datos del cliente');
+      throw new BadRequestException('Debe proporcionar clientId o datos del cliente');
     }
 
     const room = await this.roomRepo.findOneBy({ id: dto.roomId });
     if (!room) throw new NotFoundException('Habitación no encontrada');
 
     if (room.estado !== EstadoHabitacion.LIBERADA) {
-      throw new Error('La habitación no está disponible');
+      throw new BadRequestException('La habitación no está disponible');
     }
 
     if (dto.Personas > room.capacidad) {
-      throw new Error(`La habitación solo admite hasta ${room.capacidad} personas`);
+      throw new BadRequestException(`La habitación solo admite hasta ${room.capacidad} personas`);
+    }
+
+    const fechaIngreso = new Date(dto.fechaIngreso);
+    const fechaSalida = new Date(dto.fechaSalida);
+    const noches = Math.ceil((fechaSalida.getTime() - fechaIngreso.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (noches <= 0) {
+      throw new BadRequestException('Las fechas de ingreso y salida no son válidas');
+    }
+
+    const montoTotal = noches * Number(room.precioPorNoche);
+    const depositoMinimo = montoTotal * 0.1;
+
+    if (dto.montoPagado < depositoMinimo) {
+      throw new BadRequestException(`Debe abonar al menos el 10% (${depositoMinimo}) para confirmar la reserva`);
     }
 
     const booking = this.bookingRepo.create({
-      fechaReserva: dto.fechaReserva,
+      fechaReserva: new Date(),
       fechaIngreso: dto.fechaIngreso,
       fechaSalida: dto.fechaSalida,
-      deposit: dto.deposit,
       Personas: dto.Personas,
+      noches,
+      montoTotal,
+      montoPagado: dto.montoPagado,
+      saldoPendiente: montoTotal - dto.montoPagado,
       client,
       room,
-      estado: EstadoReserva.CONFIRMADO,
+      estado: EstadoReserva.RESERVADO,
     });
 
     room.estado = EstadoHabitacion.RESERVADA;
@@ -78,6 +96,7 @@ export class BookingService {
 
     return await this.bookingRepo.save(booking);
   }
+
   async findAll(
     estado?: EstadoReserva,
     page = 1,

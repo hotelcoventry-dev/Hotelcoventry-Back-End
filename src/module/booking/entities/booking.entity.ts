@@ -1,25 +1,17 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { Client } from './client.entity';
 import { Room } from '../../room/entities/room.entity';
+import { Client } from './client.entity';
 
 export enum EstadoReserva {
-  CONFIRMADO = 'CONFIRMADO',
-  PENDIENTE = 'PENDIENTE',
+  RESERVADO = 'RESERVADO',
   CANCELADO = 'CANCELADO',
-  LIBERADA = 'LIBERADA',
-  RESERVADA = 'RESERVADA',
+  CONFIRMADO = 'CONFIRMADO',
 }
 
 @Entity()
 export class Booking {
   @PrimaryGeneratedColumn()
   id: number;
-
-  @ManyToOne(() => Client, (client) => client.bookings, { eager: true })
-  client: Client;
-
-  @ManyToOne(() => Room, (room) => room.bookings, { eager: true })
-  room: Room;
 
   @Column({ type: 'date' })
   fechaReserva: Date;
@@ -33,12 +25,27 @@ export class Booking {
   @Column()
   Personas: number;
 
-  @Column({ type: 'enum', enum: EstadoReserva, default: EstadoReserva.RESERVADA })
-  estado: EstadoReserva;
+  @Column({ type: 'int', nullable: true })
+  noches: number;
 
-  @Column('decimal', { precision: 10, scale: 2 })
-  deposit: number;
+  @Column({ type: 'decimal', nullable: true })
+  montoTotal: number;
+
+  @Column({ type: 'decimal', nullable: true })
+  montoPagado: number;
+
+  @Column({ type: 'decimal', nullable: true })
+  saldoPendiente: number;
+
+  @Column({ type: 'enum', enum: EstadoReserva, default: EstadoReserva.RESERVADO })
+  estado: EstadoReserva;
 
   @Column({ nullable: true })
   motivoCancelacion?: string;
+
+  @ManyToOne(() => Client, (client) => client.bookings, { eager: true })
+  client: Client;
+
+  @ManyToOne(() => Room, (room) => room.bookings, { eager: true })
+  room: Room;
 }

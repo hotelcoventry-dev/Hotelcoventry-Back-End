@@ -17,7 +17,14 @@ async function bootstrap(): Promise<void> {
   );
 
   app.enableCors({
-    origin: ['http://localhost:3001', 'http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173'],
+    origin: [
+      'http://localhost:3001',
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://localhost:5173',
+      'https://hotelcoventry-front.vercel.app',
+      'https://hotelcoventry-back-end.onrender.com',
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
@@ -35,8 +42,8 @@ async function bootstrap(): Promise<void> {
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
 
-  logger.log(`🚀 Frontend corriendo en `);
-  logger.log(`📚 Swagger en `);
+  logger.log(`🚀 Frontend corriendo en https://hotelcoventry-front.vercel.app/`);
+  logger.log(`📚 Swagger de deploy en https://hotelcoventry-back-end.onrender.com/api/docs`);
   logger.log(`📚 Swagger en http://localhost:3001/api/docs`);
 }
 

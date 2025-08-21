@@ -1,35 +1,56 @@
-import { Controller, Post, Body, Put, Param, Get, Query, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Put,
+  Param,
+  Get,
+  Query,
+  ParseIntPipe,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { BookingService } from './booking.service';
-import { CreateBookingDto } from './dto/create-booking.dto';
+import { CreateBookingWithClientDto } from './dto/create-booking.dto';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { Booking, EstadoReserva } from './entities/booking.entity';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from 'src/guards/auth.guards';
+import { RoleGuard } from 'src/guards/auth.guards.admin';
 
 @ApiTags('Bookings')
+@ApiBearerAuth()
 @Controller('booking')
+@UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
+  @ApiOperation({ summary: 'Create a booking' })
+  @ApiResponse({ status: 201, description: 'Booking successfully created', type: Booking })
+  @ApiResponse({ status: 404, description: 'Client or room not found' })
+  @UseGuards(AuthGuard, RoleGuard)
   @Post()
-  @ApiOperation({ summary: 'Crear una reserva' })
-  @ApiResponse({ status: 201, description: 'Reserva creada con éxito', type: Booking })
-  @ApiResponse({ status: 404, description: 'Cliente o habitación no encontrados' })
-  async create(@Body() dto: CreateBookingDto): Promise<Booking> {
-    return await this.bookingService.create(dto);
+  async create(@Body() dto: CreateBookingWithClientDto): Promise<Booking> {
+    return await this.bookingService.createWithClient(dto);
   }
 
-  @Put(':id/cancelar')
-  @ApiOperation({ summary: 'Cancelar una reserva' })
-  @ApiResponse({ status: 200, description: 'Reserva cancelada con éxito', type: Booking })
-  @ApiResponse({ status: 404, description: 'Reserva no encontrada' })
+  @ApiOperation({ summary: 'Cancel a booking' })
+  @ApiResponse({ status: 200, description: 'Booking successfully canceled', type: Booking })
+  @ApiResponse({ status: 404, description: 'Booking not found' })
+  @ApiParam({ name: 'id', type: Number, description: 'ID of the booking to cancel' })
+  @UseGuards(AuthGuard, RoleGuard)
+  @Put(':id/cancel')
   async cancel(@Param('id', ParseIntPipe) id: number, @Body() dto: CancelBookingDto): Promise<Booking> {
     return await this.bookingService.cancel(id, dto);
   }
 
+  @ApiOperation({ summary: 'Get all bookings' })
+  @ApiQuery({ name: 'estado', enum: EstadoReserva, required: false, description: 'Filter by booking status' })
+  @ApiQuery({ name: 'page', type: Number, required: false, description: 'Page number' })
+  @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Number of items per page' })
+  @UseGuards(AuthGuard, RoleGuard)
   @Get()
-  @ApiQuery({ name: 'estado', enum: EstadoReserva, required: false })
-  @ApiQuery({ name: 'page', type: Number, required: false })
-  @ApiQuery({ name: 'limit', type: Number, required: false })
   findAll(
     @Query('estado') estado?: EstadoReserva,
     @Query('page') page = 1,
@@ -38,17 +59,21 @@ export class BookingController {
     return this.bookingService.findAll(estado, +page, +limit);
   }
 
-  @Get('cliente/:id')
-  @ApiOperation({ summary: 'Buscar reservas por cliente' })
-  @ApiResponse({ status: 200, description: 'Reservas del cliente', type: [Booking] })
-  async findByClient(@Param('id', ParseIntPipe) clienteId: number): Promise<Booking[]> {
-    return await this.bookingService.findByClient(clienteId);
+  @ApiOperation({ summary: 'Find bookings by client' })
+  @ApiResponse({ status: 200, description: 'Bookings for the client', type: [Booking] })
+  @ApiParam({ name: 'id', type: Number, description: 'ID of the client' })
+  @UseGuards(AuthGuard, RoleGuard)
+  @Get('client/:id')
+  async findByClient(@Param('id', ParseIntPipe) clientId: number): Promise<Booking[]> {
+    return await this.bookingService.findByClient(clientId);
   }
 
+  @ApiOperation({ summary: 'Find a booking by ID' })
+  @ApiResponse({ status: 200, description: 'Booking found', type: Booking })
+  @ApiResponse({ status: 404, description: 'Booking not found' })
+  @ApiParam({ name: 'id', type: Number, description: 'ID of the booking' })
+  @UseGuards(AuthGuard, RoleGuard)
   @Get(':id')
-  @ApiOperation({ summary: 'Buscar una reserva por ID' })
-  @ApiResponse({ status: 200, description: 'Reserva encontrada', type: Booking })
-  @ApiResponse({ status: 404, description: 'Reserva no encontrada' })
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<Booking> {
     return await this.bookingService.findOne(id);
   }

@@ -2,9 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Booking, EstadoReserva } from './entities/booking.entity';
-import { Room, EstadoHabitacion } from './entities/room.entity';
+import { Room, EstadoHabitacion } from '../room/entities/room.entity';
 import { Client } from './entities/client.entity';
-import { CreateBookingDto } from './dto/create-booking.dto';
+import { CreateBookingWithClientDto } from './dto/create-booking.dto';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 
 @Injectable()
@@ -20,9 +20,36 @@ export class BookingService {
     private readonly clientRepo: Repository<Client>,
   ) {}
 
-  async create(dto: CreateBookingDto): Promise<Booking> {
-    const client = await this.clientRepo.findOneBy({ id: dto.clientId });
-    if (!client) throw new NotFoundException('Cliente no encontrado');
+  async createWithClient(dto: CreateBookingWithClientDto): Promise<Booking> {
+    let client: Client;
+
+    if (dto.clientId) {
+      const found = await this.clientRepo.findOneBy({ id: dto.clientId });
+      if (!found) throw new NotFoundException('Cliente no encontrado');
+      client = found;
+    } else if (dto.dni || dto.email) {
+      let found = await this.clientRepo.findOne({
+        where: [{ dni: dto.dni }, { email: dto.email }],
+      });
+
+      if (!found) {
+        found = this.clientRepo.create({
+          nombre: dto.nombre,
+          apellido: dto.apellido,
+          dni: dto.dni,
+          email: dto.email,
+          telefono: dto.telefono,
+          direccion: dto.direccion,
+          cuit: dto.cuit,
+          imagenDni: dto.imagenDni,
+        });
+        await this.clientRepo.save(found);
+      }
+
+      client = found;
+    } else {
+      throw new Error('Debe proporcionar clientId o datos del cliente');
+    }
 
     const room = await this.roomRepo.findOneBy({ id: dto.roomId });
     if (!room) throw new NotFoundException('Habitación no encontrada');

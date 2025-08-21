@@ -55,7 +55,7 @@ export class CreateUserDto {
   isManager?: boolean;
 }
 
-export class LoginUserDto extends PickType(CreateUserDto, ['username', 'password']) {}
+export class LoginUserDto extends PickType(CreateUserDto, ['EmployeeNumber', 'password']) {}
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {}
 

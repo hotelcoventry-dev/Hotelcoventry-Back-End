@@ -35,7 +35,6 @@ export class UsersService {
     const { username, ...pagination } = searchQuery;
 
     if (!username) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       return await paginate(this.usersRepository, pagination, {
         order: { createdAt: 'DESC' },
         withDeleted: true,
@@ -89,9 +88,9 @@ export class UsersService {
     return user;
   }
 
-  async findByUsername(username: string): Promise<Users | null> {
+  async findByEmployeeNumber(EmployeeNumber: number): Promise<Users | null> {
     return await this.usersRepository.findOne({
-      where: { username },
+      where: { EmployeeNumber },
       select: ['id', 'username', 'EmployeeNumber', 'password', 'isReceptionist', 'isManager'],
     });
   }

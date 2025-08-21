@@ -3,8 +3,11 @@ import { Client } from './client.entity';
 import { Room } from './room.entity';
 
 export enum EstadoReserva {
+  CONFIRMADO = 'CONFIRMADO',
+  PENDIENTE = 'PENDIENTE',
+  CANCELADO = 'CANCELADO',
+  LIBERADA = 'LIBERADA',
   RESERVADA = 'RESERVADA',
-  CANCELADA = 'CANCELADA',
 }
 
 @Entity()

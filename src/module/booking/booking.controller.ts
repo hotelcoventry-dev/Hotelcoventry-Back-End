@@ -1,52 +1,55 @@
-import { Controller, Post, Body, Put, Param, Get } from '@nestjs/common';
+import { Controller, Post, Body, Put, Param, Get, Query, ParseIntPipe } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
-import { Booking } from './entities/booking.entity';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { Booking, EstadoReserva } from './entities/booking.entity';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 
-@ApiTags('Booking')
+@ApiTags('Bookings')
 @Controller('booking')
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
-  @ApiOperation({ summary: 'Crear una nueva reserva' })
-  @ApiBody({ type: CreateBookingDto })
-  @ApiResponse({ status: 201, description: 'Reserva creada exitosamente', type: Booking })
   @Post()
-  create(@Body() dto: CreateBookingDto): Promise<Booking> {
-    return this.bookingService.create(dto);
+  @ApiOperation({ summary: 'Crear una reserva' })
+  @ApiResponse({ status: 201, description: 'Reserva creada con éxito', type: Booking })
+  @ApiResponse({ status: 404, description: 'Cliente o habitación no encontrados' })
+  async create(@Body() dto: CreateBookingDto): Promise<Booking> {
+    return await this.bookingService.create(dto);
   }
 
-  @ApiOperation({ summary: 'Cancelar una reserva existente' })
-  @ApiParam({ name: 'id', type: Number, description: 'ID de la reserva' })
-  @ApiBody({ type: CancelBookingDto })
-  @ApiResponse({ status: 200, description: 'Reserva cancelada correctamente', type: Booking })
   @Put(':id/cancelar')
-  cancel(@Param('id') id: number, @Body() dto: CancelBookingDto): Promise<Booking> {
-    return this.bookingService.cancel(id, dto);
+  @ApiOperation({ summary: 'Cancelar una reserva' })
+  @ApiResponse({ status: 200, description: 'Reserva cancelada con éxito', type: Booking })
+  @ApiResponse({ status: 404, description: 'Reserva no encontrada' })
+  async cancel(@Param('id', ParseIntPipe) id: number, @Body() dto: CancelBookingDto): Promise<Booking> {
+    return await this.bookingService.cancel(id, dto);
   }
 
-  @ApiOperation({ summary: 'Obtener todas las reservas' })
-  @ApiResponse({ status: 200, description: 'Lista de reservas', type: [Booking] })
   @Get()
-  findAll(): Promise<Booking[]> {
-    return this.bookingService.findAll();
+  @ApiQuery({ name: 'estado', enum: EstadoReserva, required: false })
+  @ApiQuery({ name: 'page', type: Number, required: false })
+  @ApiQuery({ name: 'limit', type: Number, required: false })
+  findAll(
+    @Query('estado') estado?: EstadoReserva,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ): Promise<{ data: Booking[]; total: number; page: number; limit: number }> {
+    return this.bookingService.findAll(estado, +page, +limit);
   }
 
-  @ApiOperation({ summary: 'Obtener una reserva por ID' })
-  @ApiParam({ name: 'id', type: Number, description: 'ID de la reserva' })
+  @Get('cliente/:id')
+  @ApiOperation({ summary: 'Buscar reservas por cliente' })
+  @ApiResponse({ status: 200, description: 'Reservas del cliente', type: [Booking] })
+  async findByClient(@Param('id', ParseIntPipe) clienteId: number): Promise<Booking[]> {
+    return await this.bookingService.findByClient(clienteId);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Buscar una reserva por ID' })
   @ApiResponse({ status: 200, description: 'Reserva encontrada', type: Booking })
   @ApiResponse({ status: 404, description: 'Reserva no encontrada' })
-  @Get(':id')
-  findOne(@Param('id') id: number): Promise<Booking> {
-    return this.bookingService.findOne(id);
-  }
-
-  @Get('client/:id')
-  @ApiOperation({ summary: 'Buscar reservas por cliente' })
-  @ApiResponse({ status: 200, description: 'Lista de reservas del cliente', type: [Booking] })
-  findByClient(@Param('id') clienteId: number): Promise<Booking[]> {
-    return this.bookingService.findByClient(clienteId);
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<Booking> {
+    return await this.bookingService.findOne(id);
   }
 }

@@ -1,25 +1,14 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Req,
-  Res,
-  UseFilters,
-  UseGuards,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
-import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 
 import { AuthsService } from './auths.service';
 import { CreateUserDto, LoginUserDto } from '../users/Dtos/CreateUserDto';
-
-import { AuthExceptionFilter } from './validate/auth.filter';
-import { GoogleUser } from './interface/IAuth.interface';
+import { AuthResponse } from './interface/IAuth.interface';
+import { ResponseUserDto } from '../users/interface/IUserResponseDto';
+import { AuthGuard } from 'src/guards/auth.guards';
+import { RoleGuard } from 'src/guards/auth.guards.admin';
+import { Roles, UserRole } from 'src/decorator/role.decorator';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -40,11 +29,8 @@ export class AuthsController {
     description: 'Invalid credentials',
   })
   @Post('signin')
-  async signin(@Body() credentials: LoginUserDto) {
-    return await this.authService.signin(
-      credentials.email,
-      credentials.password,
-    );
+  async signin(@Body() credentials: LoginUserDto): Promise<AuthResponse> {
+    return await this.authService.signin(credentials.EmployeeNumber, credentials.password);
   }
 
   @ApiOperation({ summary: 'Sign up new user' })
@@ -63,37 +49,10 @@ export class AuthsController {
       forbidNonWhitelisted: true,
     }),
   )
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles(UserRole.MANAGER)
   @Post('signup')
-  async signup(@Body() newUser: CreateUserDto) {
+  async signup(@Body() newUser: CreateUserDto): Promise<ResponseUserDto> {
     return await this.authService.signup(newUser);
-  }
-
-  @ApiOperation({ summary: 'Initiate Google OAuth authentication' })
-  @ApiResponse({
-    status: 302,
-    description: 'Redirects to Google OAuth consent screen',
-  })
-  @UseGuards(PassportAuthGuard('google'))
-  @Get('google')
-  async googleAuth() {}
-
-  @ApiOperation({ summary: 'Google OAuth callback handler' })
-  @ApiResponse({
-    status: 302,
-    description: 'Redirects to frontend with token or error',
-  })
-  @UseFilters(AuthExceptionFilter)
-  @UseGuards(PassportAuthGuard('google'))
-  @Get('google/callback')
-  async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
-    const googleUser = req.user as GoogleUser;
-    const frontendUrl = this.configService.get<string>(
-      'GoogleOAuth.frontendUrl',
-    );
-
-    const result = await this.authService.googleLogin(googleUser);
-    return res.redirect(
-      `${frontendUrl}/auth/callback?token=${result.accessToken}&userId=${result.user.id}`,
-    );
   }
 }

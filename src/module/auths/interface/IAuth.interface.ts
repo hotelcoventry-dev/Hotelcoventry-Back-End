@@ -3,23 +3,19 @@ export interface AuthResponse {
   expiresIn: number;
   user: {
     id: string;
-    name: string;
-    email: string;
-    birthdate?: Date;
-    address: string;
-    username?: string;
-    phone?: number;
+    username: string;
+    EmployeeNumber: number;
+    isReceptionist: boolean;
+    isManager: boolean;
   };
 }
 
 export interface IUserAuthResponse {
   id: string;
-  name: string;
-  email: string;
-  birthdate: Date;
-  phone: number;
   username: string;
-  isAdmin: boolean;
-  isSuperAdmin: boolean;
-  isDonator: boolean;
+  EmployeeNumber: number;
+  isReceptionist: boolean;
+  isManager: boolean;
+  createdAt: Date;
+  deletedAt: Date | null;
 }

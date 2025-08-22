@@ -1,9 +1,21 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, ParseUUIDPipe, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  ParseUUIDPipe,
+  BadRequestException,
+  Query,
+} from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './DTO/createProduct.dto';
 import { UpdateProductDto } from './DTO/updateProduct.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { Product } from './entities/product.entity';
+import { ProductFilterDTO } from './DTO/product-filter.dto';
 
 @ApiTags('Products')
 @Controller('products')
@@ -25,8 +37,9 @@ export class ProductsController {
   @Get()
   @ApiOperation({ summary: 'Obtener todos los productos' })
   @ApiResponse({ status: 200, description: 'Lista de productos obtenida con éxito' })
-  async findAll(): Promise<Product[]> {
-    return await this.productsService.findAll();
+  async findAll(@Query() filters: ProductFilterDTO): Promise<{ products: Product[]; total: number; pages: number }> {
+    const { page = 1, limit = 10, categoryId, name } = filters;
+    return await this.productsService.findAll(page, limit, categoryId, name);
   }
 
   @Get(':id')

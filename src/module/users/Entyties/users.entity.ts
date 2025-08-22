@@ -7,7 +7,7 @@ export class Users {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 50, unique: true, nullable: false })
+  @Column({ type: 'varchar', length: 50, nullable: false })
   username: string;
 
   @Column({ type: 'bigint', nullable: false, unique: true })
@@ -21,6 +21,9 @@ export class Users {
 
   @Column({ type: 'boolean', default: false })
   isManager: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  isSuperAdmin: boolean;
 
   @CreateDateColumn()
   createdAt?: Date;

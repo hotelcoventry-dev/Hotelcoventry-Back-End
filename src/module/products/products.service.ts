@@ -104,12 +104,36 @@ export class ProductsService {
     }
   }
 
-  async findAll(): Promise<Product[]> {
+  async findAll(
+    page = 1,
+    limit = 10,
+    categoryId?: string,
+    name?: string,
+  ): Promise<{ products: Product[]; total: number; pages: number }> {
     try {
-      return await this.productRepository.find({
-        where: { isDeleted: IsNull() },
-        relations: ['category', 'stock', 'files'],
-      });
+      const query = this.productRepository
+        .createQueryBuilder('product')
+        .leftJoinAndSelect('product.category', 'category')
+        .leftJoinAndSelect('product.stock', 'stock')
+        .leftJoinAndSelect('product.files', 'files')
+        .where('product.isDeleted IS NULL');
+
+      if (categoryId) {
+        query.andWhere('category.id = :categoryId', { categoryId });
+      }
+
+      if (name) {
+        query.andWhere('LOWER(product.name) LIKE :name', { name: `%${name.toLowerCase()}%` });
+      }
+
+      const [products, total] = await query
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getManyAndCount();
+
+      const pages = Math.ceil(total / limit);
+
+      return { products, total, pages };
     } catch (error: unknown) {
       if (error instanceof Error) {
         throw new InternalServerErrorException(`Error fetching products: ${error.message}`);

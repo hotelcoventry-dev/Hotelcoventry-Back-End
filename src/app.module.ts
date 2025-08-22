@@ -8,6 +8,9 @@ import { UsersModule } from './module/users/users.module';
 import { AuthsModule } from './module/auths/auths.module';
 import { BookingModule } from './module/booking/booking.module';
 import { RoomModule } from './module/room/room.module';
+import { StockModule } from './module/stock/stock.module';
+import { CategoryModule } from './module/categories/category.module';
+import { FileUploadModule } from './module/file-upload/file-upload.module';
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { RoomModule } from './module/room/room.module';
     AuthsModule,
     BookingModule,
     RoomModule,
+    StockModule,
+    CategoryModule,
+    FileUploadModule,
   ],
   controllers: [],
   providers: [],

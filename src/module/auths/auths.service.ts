@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
@@ -12,8 +12,6 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class AuthsService {
-  private readonly logger = new Logger(AuthsService.name);
-
   constructor(
     @InjectRepository(Users)
     private readonly usersRepository: Repository<Users>,
@@ -51,7 +49,7 @@ export class AuthsService {
       const createdUser = await this.userService.createUserService({
         ...userData,
         password: hashedPassword,
-        isReceptionist: false,
+        isReceptionist: true,
         isManager: false,
       });
 
@@ -64,10 +62,11 @@ export class AuthsService {
   private generateAuthResponse(user: IUserAuthResponse): AuthResponse {
     const payload = {
       sub: user.id,
-      EmployeeNumber: user.EmployeeNumber,
       username: user.username,
+      EmployeeNumber: user.EmployeeNumber,
       isReceptionist: user.isReceptionist,
       isManager: user.isManager,
+      isSuperAdmin: user.isSuperAdmin,
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -90,6 +89,7 @@ export class AuthsService {
     if (!user) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
+
     return user as IUserAuthResponse & { password?: string };
   }
 }

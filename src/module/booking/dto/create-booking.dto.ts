@@ -1,47 +1,66 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsNumber } from 'class-validator';
+import { IsDateString, IsNumber, IsOptional, IsInt, Min } from 'class-validator';
 
-export class CreateBookingDto {
-  @ApiProperty({
-    example: 1,
-    description: 'ID del cliente que hace la reserva',
-  })
-  @IsNumber()
-  clientId: number;
-
-  @ApiProperty({
-    example: 101,
-    description: 'ID de la habitación a reservar',
-  })
-  @IsNumber()
+export class CreateBookingWithClientDto {
+  @ApiProperty({ example: 1, description: 'ID of the room to be booked' })
+  @IsInt()
   roomId: number;
 
-  @ApiProperty({
-    example: '2025-08-20',
-    description: 'Fecha en la que se genera la reserva',
-  })
+  @ApiProperty({ example: '2025-09-01', description: 'Booking date' })
   @IsDateString()
-  fechaReserva: Date;
+  fechaReserva: string;
 
-  @ApiProperty({
-    example: '2025-08-25',
-    description: 'Fecha de ingreso del cliente',
-  })
+  @ApiProperty({ example: '2025-09-01', description: 'Check-in date' })
   @IsDateString()
-  fechaIngreso: Date;
+  fechaIngreso: string;
 
-  @ApiProperty({
-    example: '2025-08-30',
-    description: 'Fecha de salida del cliente',
-  })
+  @ApiProperty({ example: '2025-09-05', description: 'Check-out date' })
   @IsDateString()
-  fechaSalida: Date;
+  fechaSalida: string;
 
-  @ApiProperty({ example: '3', description: 'numero de personas que se hospedaran' })
-  @IsNumber()
+  @ApiProperty({ example: 2, description: 'Number of people' })
+  @IsInt()
+  @Min(1)
   Personas: number;
 
-  @ApiProperty({ example: '259.000$', description: 'monto de la reserva ya pago' })
+  @ApiProperty({ example: 200.0, description: 'Amount paid by client (must be at least 10%)' })
   @IsNumber()
-  deposit: number;
+  @Min(0)
+  montoPagado: number;
+
+  @ApiProperty({ example: 1, description: 'Client ID (if already exists)', required: false })
+  @IsOptional()
+  clientId?: number;
+
+  @ApiProperty({ example: 'Juan', required: false })
+  @IsOptional()
+  nombre?: string;
+
+  @ApiProperty({ example: 'Perez', required: false })
+  @IsOptional()
+  apellido?: string;
+
+  @ApiProperty({ example: '12345678', required: false })
+  @IsOptional()
+  dni?: string;
+
+  @ApiProperty({ example: 'test@mail.com', required: false })
+  @IsOptional()
+  email?: string;
+
+  @ApiProperty({ example: '+541112345678', required: false })
+  @IsOptional()
+  telefono?: string;
+
+  @ApiProperty({ example: 'Calle Falsa 123', required: false })
+  @IsOptional()
+  direccion?: string;
+
+  @ApiProperty({ example: '20-12345678-9', required: false })
+  @IsOptional()
+  cuit?: string;
+
+  @ApiProperty({ example: 'dni.jpg', required: false })
+  @IsOptional()
+  imagenDni?: string;
 }

@@ -10,7 +10,7 @@ const config = {
   database: process.env.DB_NAME,
   port: Number(process.env.DB_PORT),
   username: process.env.DB_USERNAME,
-  password: process.env.DB_PASSWORD,
+  password: String(process.env.DB_PASSWORD),
   autoLoadEntities: true,
   synchronize: true,
   logging: true,

@@ -53,6 +53,11 @@ export class CreateUserDto {
   @IsOptional()
   @IsBoolean()
   isManager?: boolean;
+
+  @ApiHideProperty()
+  @IsOptional()
+  @IsBoolean()
+  isSuperAdmin?: boolean;
 }
 
 export class LoginUserDto extends PickType(CreateUserDto, ['EmployeeNumber', 'password']) {}

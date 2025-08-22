@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Booking } from './booking.entity';
+import { Booking } from '../../booking/entities/booking.entity';
 
 export enum EstadoHabitacion {
   LIBERADA = 'LIBERADA',
@@ -20,6 +20,9 @@ export class Room {
 
   @Column()
   capacidad: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  precioPorNoche: number;
 
   @Column({ type: 'enum', enum: EstadoHabitacion, default: EstadoHabitacion.LIBERADA })
   estado: EstadoHabitacion;

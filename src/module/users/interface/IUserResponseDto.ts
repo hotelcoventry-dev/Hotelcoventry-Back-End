@@ -11,8 +11,6 @@ export interface IUserResponseDto {
 }
 
 export interface IUserResponseWithAdmin extends IUserResponseDto {
-  isReceptionist: boolean;
-  isManager: boolean;
   password: string;
 }
 
@@ -47,8 +45,6 @@ export class ResponseUserWithAdminDto {
   static toDTO(user: Users): IUserResponseWithAdmin {
     return {
       ...ResponseUserDto.toDTO(user),
-      isReceptionist: user.isReceptionist,
-      isManager: user.isManager,
       password: user.password,
     };
   }

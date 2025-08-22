@@ -29,25 +29,12 @@ import { UpdateUserDbDto } from './Dtos/CreateUserDto';
 import { UserSearchQueryDto } from './Dtos/PaginationQueryDto';
 import { PaginatedUsersDto } from './Dtos/paginated-users.dto';
 import { UpdateRoleDto } from './Dtos/UpdateRoleDto';
-import { Users } from './Entyties/users.entity';
 
 @ApiTags('Users')
 @ApiBearerAuth()
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  @ApiOperation({ summary: 'find all' })
-  @UseGuards(AuthGuard, RoleGuard)
-  @Roles(UserRole.MANAGER)
-  @ApiResponse({
-    status: 200,
-    description: 'Find all',
-  })
-  @Get('all')
-  async findAll(): Promise<Users[]> {
-    return await this.usersService.findAll();
-  }
 
   @ApiOperation({
     summary: 'Retrieve all users (paginated) with optional search filters',
@@ -59,6 +46,12 @@ export class UsersController {
     required: false,
     type: String,
     description: 'Username to search for users',
+  })
+  @ApiQuery({
+    name: 'EmployeeNumber',
+    required: false,
+    type: Number,
+    description: 'EmployeeNumber to search for users',
   })
   @ApiResponse({ status: 200, description: 'OK', type: PaginatedUsersDto })
   @UseGuards(AuthGuard, RoleGuard)

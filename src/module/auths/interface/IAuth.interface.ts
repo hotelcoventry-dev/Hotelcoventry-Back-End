@@ -7,6 +7,7 @@ export interface AuthResponse {
     EmployeeNumber: number;
     isReceptionist: boolean;
     isManager: boolean;
+    isSuperAdmin?: boolean;
   };
 }
 
@@ -16,6 +17,7 @@ export interface IUserAuthResponse {
   EmployeeNumber: number;
   isReceptionist: boolean;
   isManager: boolean;
+  isSuperAdmin?: boolean;
   createdAt: Date;
   deletedAt: Date | null;
 }

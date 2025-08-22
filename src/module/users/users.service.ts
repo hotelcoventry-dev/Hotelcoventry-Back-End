@@ -25,16 +25,10 @@ export class UsersService {
     private readonly configService: ConfigService,
   ) {}
 
-  async findAll(): Promise<Users[]> {
-    return await this.usersRepository.find({
-      order: { createdAt: 'DESC' },
-    });
-  }
-
   async getUsers(searchQuery: UserSearchQueryDto): Promise<IPaginatedResult<Users>> {
-    const { username, ...pagination } = searchQuery;
+    const { username, EmployeeNumber, ...pagination } = searchQuery;
 
-    if (!username) {
+    if (!username && !EmployeeNumber) {
       return await paginate(this.usersRepository, pagination, {
         order: { createdAt: 'DESC' },
         withDeleted: true,
@@ -58,6 +52,12 @@ export class UsersService {
     if (username) {
       queryBuilder.andWhere('LOWER(user.username) LIKE LOWER(:username)', {
         username: `%${username}%`,
+      });
+    }
+
+    if (EmployeeNumber) {
+      queryBuilder.andWhere('CAST(user.EmployeeNumber AS VARCHAR) LIKE :EmployeeNumber', {
+        EmployeeNumber: `%${EmployeeNumber}%`,
       });
     }
 
@@ -91,11 +91,19 @@ export class UsersService {
   async findByEmployeeNumber(EmployeeNumber: number): Promise<Users | null> {
     return await this.usersRepository.findOne({
       where: { EmployeeNumber },
-      select: ['id', 'username', 'EmployeeNumber', 'password', 'isReceptionist', 'isManager'],
+      select: ['id', 'username', 'EmployeeNumber', 'password', 'isSuperAdmin', 'isManager', 'isReceptionist'],
     });
   }
 
   async createUserService(dto: CreateUserDbDto): Promise<Users> {
+    const camposRestringidos = ['isReceptionist', 'isManager', 'isSuperAdmin'];
+
+    for (const campo of camposRestringidos) {
+      if (Object.prototype.hasOwnProperty.call(dto, campo)) {
+        delete dto[campo];
+      }
+    }
+
     try {
       const user = this.usersRepository.create(dto);
       return await this.usersRepository.save(user);
@@ -109,6 +117,14 @@ export class UsersService {
   }
 
   async updateUserService(id: string, dto: UpdateUserDbDto): Promise<Users> {
+    const camposRestringidos = ['isReceptionist', 'isManager', 'isSuperAdmin'];
+
+    for (const campo of camposRestringidos) {
+      if (Object.prototype.hasOwnProperty.call(dto, campo)) {
+        delete dto[campo];
+      }
+    }
+
     if (dto.password) {
       dto.password = await AuthValidations.hashPassword(dto.password);
     }
@@ -133,6 +149,14 @@ export class UsersService {
   }
 
   async rollChange(userId: string, dto: UpdateRoleDto): Promise<void> {
+    const camposRestringidos = ['isSuperAdmin'];
+
+    for (const campo of camposRestringidos) {
+      if (Object.prototype.hasOwnProperty.call(dto, campo)) {
+        delete dto[campo];
+      }
+    }
+
     try {
       const user = await this.usersRepository.findOne({
         where: { id: userId },

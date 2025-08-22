@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsPositive, IsString, Max } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, IsPositive, IsString, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -18,7 +18,7 @@ export class PaginationQueryDto {
   @ApiProperty({
     example: 1,
     required: false,
-    description: 'The page number to retrive',
+    description: 'The page number to retrieve',
   })
   @IsOptional()
   @IsPositive()
@@ -36,4 +36,14 @@ export class UserSearchQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   username?: string;
+
+  @ApiProperty({
+    example: 1234567890,
+    required: false,
+    description: 'EmployeeNumber to search for users',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  EmployeeNumber?: number;
 }

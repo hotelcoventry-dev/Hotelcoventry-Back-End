@@ -1,6 +1,7 @@
 import { SetMetadata, CustomDecorator } from '@nestjs/common';
 
 export enum UserRole {
+  SUPERADMIN = 'superadmin',
   RECEPTIONIST = 'receptionist',
   MANAGER = 'manager',
 }

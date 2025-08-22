@@ -20,8 +20,11 @@ export class CategoryService {
 
       const category = this.categoryRepository.create(createCategoryDto);
       return await this.categoryRepository.save(category);
-    } catch (error) {
-      throw new BadRequestException(error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new BadRequestException(error.message);
+      }
+      throw new BadRequestException('Error desconocido al crear categoría');
     }
   }
 

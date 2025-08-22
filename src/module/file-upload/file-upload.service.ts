@@ -5,6 +5,7 @@ import { File } from './entities/file.entity';
 import { Product } from '../products/entities/product.entity';
 import { cloudinary } from '../../config/cloudinary';
 import { Readable } from 'stream';
+import { UploadApiErrorResponse, UploadApiResponse } from 'cloudinary';
 
 @Injectable()
 export class FileUploadService {
@@ -33,17 +34,19 @@ export class FileUploadService {
     }
 
     try {
-      const result = await new Promise<any>((resolve, reject) => {
+      const result: UploadApiResponse = await new Promise<UploadApiResponse>((resolve, reject) => {
         const upload = cloudinary.uploader.upload_stream(
           {
             folder: `products/${product_Id}`,
             resource_type: 'image',
           },
-          (error, result) => {
+          (error: UploadApiErrorResponse | undefined, result: UploadApiResponse | undefined) => {
             if (error) {
               reject(new Error(typeof error === 'string' ? error : JSON.stringify(error)));
-            } else {
+            } else if (result) {
               resolve(result);
+            } else {
+              reject(new Error('Cloudinary no devolvió respuesta válida'));
             }
           },
         );
@@ -60,8 +63,11 @@ export class FileUploadService {
       });
 
       return await this.fileRepository.save(fileEntity);
-    } catch (error) {
-      throw new BadRequestException(`Error subiendo archivo a Cloudinary: ${error.message}`);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new BadRequestException(`Error subiendo archivo a Cloudinary: ${error.message}`);
+      }
+      throw new BadRequestException('Error desconocido subiendo archivo a Cloudinary');
     }
   }
 

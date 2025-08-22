@@ -50,7 +50,7 @@ export class StockService {
     const updatedStock = await this.stockRepository.save(stock);
 
     if (updatedStock.quantity < updatedStock.min_quantity) {
-      console.warn(`⚠️ Atención: el stock del producto ${updatedStock.product.id} está por debajo del mínimo`);
+      console.warn(`Atención: el stock del producto ${updatedStock.product.id} está por debajo del mínimo`);
     }
 
     return updatedStock;

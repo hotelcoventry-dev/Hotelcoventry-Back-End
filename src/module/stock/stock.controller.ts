@@ -4,6 +4,7 @@ import { StockService } from './stock.service';
 import { CreateStockDto } from './DTO/create-stock.dto';
 import { UpdateStockDto } from './DTO/update-stock.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { Stock } from './entities/stock.entity';
 
 @ApiTags('Stocks')
 @Controller('stocks')
@@ -15,14 +16,14 @@ export class StockController {
   @ApiBody({ type: CreateStockDto })
   @ApiResponse({ status: 201, description: 'Stock creado exitosamente' })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
-  create(@Body() createStockDto: CreateStockDto) {
+  create(@Body() createStockDto: CreateStockDto): Promise<Stock> {
     return this.stockService.create(createStockDto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Obtener todos los registros de stock' })
   @ApiResponse({ status: 200, description: 'Lista de stocks obtenida con éxito' })
-  findAll() {
+  findAll(): Promise<Stock[]> {
     return this.stockService.findAll();
   }
 
@@ -31,7 +32,7 @@ export class StockController {
   @ApiParam({ name: 'id', type: String, description: 'UUID del stock' })
   @ApiResponse({ status: 200, description: 'Stock encontrado' })
   @ApiResponse({ status: 404, description: 'Stock no encontrado' })
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Stock> {
     return this.stockService.findOne(id);
   }
 
@@ -41,7 +42,7 @@ export class StockController {
   @ApiBody({ type: UpdateStockDto })
   @ApiResponse({ status: 200, description: 'Stock actualizado con éxito' })
   @ApiResponse({ status: 404, description: 'Stock no encontrado' })
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateStockDto: UpdateStockDto) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateStockDto: UpdateStockDto): Promise<Stock> {
     return this.stockService.update(id, updateStockDto);
   }
 
@@ -50,7 +51,7 @@ export class StockController {
   @ApiParam({ name: 'id', type: String, description: 'UUID del stock' })
   @ApiResponse({ status: 200, description: 'Stock eliminado con éxito' })
   @ApiResponse({ status: 404, description: 'Stock no encontrado' })
-  remove(@Param('id', ParseUUIDPipe) id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.stockService.remove(id);
   }
 }

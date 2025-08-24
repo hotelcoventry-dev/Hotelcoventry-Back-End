@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, InternalServerErrorException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull } from 'typeorm';
+import { Repository, IsNull, QueryRunner } from 'typeorm';
 import { Product } from './entities/product.entity';
 import { CreateProductDto } from './DTO/createProduct.dto';
 import { UpdateProductDto } from './DTO/updateProduct.dto';
@@ -51,25 +51,27 @@ export class ProductsService {
       await queryRunner.commitTransaction();
 
       console.log(
-        `✅ Product and stock created successfully: ${savedProduct.name} (Stock: ${initialStock ?? 0}, Min: ${minStock ?? 5})`,
+        `Product and stock created successfully: ${savedProduct.name} (Stock: ${initialStock ?? 0}, Min: ${minStock ?? 5})`,
       );
       return savedProduct;
-    } catch (error) {
+    } catch (error: unknown) {
       await queryRunner.rollbackTransaction();
-      console.error(`❌ Transaction failed, rolling back:`, error.message);
 
       if (error instanceof NotFoundException || error instanceof ConflictException) {
         throw error;
       }
-
-      throw new InternalServerErrorException(`Error creating product: ${error.message}`);
+      if (error instanceof Error) {
+        console.error(`Transaction failed:`, error.message);
+        throw new InternalServerErrorException(`Error creating product: ${error.message}`);
+      }
+      throw new InternalServerErrorException('Unknown error creating product');
     } finally {
       await queryRunner.release();
     }
   }
 
   private async createStockInTransaction(
-    queryRunner: any,
+    queryRunner: QueryRunner,
     productId: string,
     quantity: number = 0,
     minQuantity: number = 5,
@@ -92,21 +94,51 @@ export class ProductsService {
       const stock = queryRunner.manager.create('Stock', stockData);
       await queryRunner.manager.save('Stock', stock);
 
-      console.log(`📦 Stock record created for product: ${product.name} (Qty: ${quantity}, Min: ${minQuantity})`);
-    } catch (error) {
-      console.error(`❌ Error creating stock in transaction:`, error.message);
-      throw error;
+      console.log(`Stock record created for product: ${product.name} (Qty: ${quantity}, Min: ${minQuantity})`);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error(`Error creating stock in transaction:`, error.message);
+        throw error;
+      }
+      throw new Error('Unknown error creating stock');
     }
   }
 
-  async findAll(): Promise<Product[]> {
+  async findAll(
+    page = 1,
+    limit = 10,
+    categoryId?: string,
+    name?: string,
+  ): Promise<{ products: Product[]; total: number; pages: number }> {
     try {
-      return await this.productRepository.find({
-        where: { isDeleted: IsNull() },
-        relations: ['category', 'stock', 'files'],
-      });
-    } catch (error) {
-      throw new InternalServerErrorException(`Error fetching products: ${error.message}`);
+      const query = this.productRepository
+        .createQueryBuilder('product')
+        .leftJoinAndSelect('product.category', 'category')
+        .leftJoinAndSelect('product.stock', 'stock')
+        .leftJoinAndSelect('product.files', 'files')
+        .where('product.isDeleted IS NULL');
+
+      if (categoryId) {
+        query.andWhere('category.id = :categoryId', { categoryId });
+      }
+
+      if (name) {
+        query.andWhere('LOWER(product.name) LIKE :name', { name: `%${name.toLowerCase()}%` });
+      }
+
+      const [products, total] = await query
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getManyAndCount();
+
+      const pages = Math.ceil(total / limit);
+
+      return { products, total, pages };
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new InternalServerErrorException(`Error fetching products: ${error.message}`);
+      }
+      throw new InternalServerErrorException('Unknown error fetching products');
     }
   }
 
@@ -122,8 +154,11 @@ export class ProductsService {
       }
 
       return product;
-    } catch (error) {
-      throw new InternalServerErrorException(`Error fetching product: ${error.message}`);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new InternalServerErrorException(`Error fetching product: ${error.message}`);
+      }
+      throw new InternalServerErrorException('Unknown error fetching product');
     }
   }
 
@@ -143,8 +178,11 @@ export class ProductsService {
 
       Object.assign(product, updateProductDto);
       return await this.productRepository.save(product);
-    } catch (error) {
-      throw new InternalServerErrorException(`Error updating product: ${error.message}`);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new InternalServerErrorException(`Error updating product: ${error.message}`);
+      }
+      throw new InternalServerErrorException('Unknown error updating product');
     }
   }
 
@@ -153,8 +191,11 @@ export class ProductsService {
       const product = await this.findOne(id);
       product.isDeleted = new Date();
       await this.productRepository.save(product);
-    } catch (error) {
-      throw new InternalServerErrorException(`Error deleting product: ${error.message}`);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new InternalServerErrorException(`Error deleting product: ${error.message}`);
+      }
+      throw new InternalServerErrorException('Unknown error deleting product');
     }
   }
 }

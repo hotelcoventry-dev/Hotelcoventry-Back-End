@@ -1,7 +1,17 @@
-import { Controller, Post, UseInterceptors, UploadedFile, Param, Get, Delete, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  UseInterceptors,
+  UploadedFile,
+  Param,
+  Get,
+  Delete,
+  ParseUUIDPipe,
+  Query,
+} from '@nestjs/common';
 import { FileUploadService } from './file-upload.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiConsumes, ApiQuery } from '@nestjs/swagger';
 import * as multer from 'multer';
 import { File } from './entities/file.entity';
 
@@ -40,8 +50,24 @@ export class FileUploadController {
 
   @Get()
   @ApiOperation({ summary: 'Obtener todas las imágenes subidas' })
-  findAll(): Promise<File[]> {
-    return this.fileUploadService.findAll();
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número de página (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Cantidad de imágenes por página (default: 5)',
+  })
+  @ApiResponse({ status: 200, description: 'Lista de imágenes obtenida con éxito' })
+  findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 5,
+  ): Promise<{ data: File[]; total: number; pages: number }> {
+    return this.fileUploadService.findAll(page, limit);
   }
 
   @Get(':id')

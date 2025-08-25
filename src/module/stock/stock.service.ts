@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Stock } from './entities/stock.entity';
@@ -27,8 +27,41 @@ export class StockService {
     return await this.stockRepository.save(stock);
   }
 
-  async findAll(): Promise<Stock[]> {
-    return await this.stockRepository.find({ relations: ['product'] });
+  async findAll(page: number = 1, limit: number = 10): Promise<{ data: Stock[]; total: number; pages: number }> {
+    try {
+      // Validaciones
+      if (page < 1) {
+        throw new BadRequestException('El número de página debe ser mayor o igual a 1');
+      }
+      if (limit < 1) {
+        throw new BadRequestException('El límite debe ser mayor o igual a 1');
+      }
+
+      const skip = (page - 1) * limit;
+
+      const [data, total] = await this.stockRepository.findAndCount({
+        relations: ['product'],
+        skip,
+        take: limit,
+      });
+
+      if (data.length === 0) {
+        throw new NotFoundException('No se encontraron registros de stock');
+      }
+
+      const pages = Math.ceil(total / limit);
+
+      return {
+        data,
+        total,
+        pages,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Error al obtener los registros de stock');
+    }
   }
 
   async findOne(id: string): Promise<Stock> {

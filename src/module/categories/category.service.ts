@@ -1,5 +1,5 @@
 // src/categories/category.service.ts
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
@@ -28,8 +28,48 @@ export class CategoryService {
     }
   }
 
-  async findAll(): Promise<Category[]> {
-    return await this.categoryRepository.find({ relations: ['products'] });
+  async findAll(
+    page: number = 1,
+    limit: number = 3,
+    name?: string,
+  ): Promise<{ data: Category[]; total: number; pages: number }> {
+    try {
+      if (page < 1) {
+        throw new BadRequestException('El número de página debe ser mayor o igual a 1');
+      }
+      if (limit < 1) {
+        throw new BadRequestException('El límite debe ser mayor o igual a 1');
+      }
+
+      const skip = (page - 1) * limit;
+
+      const query = this.categoryRepository
+        .createQueryBuilder('category')
+        .leftJoinAndSelect('category.products', 'products');
+
+      if (name) {
+        query.where('LOWER(category.name) LIKE :name', { name: `%${name.toLowerCase()}%` });
+      }
+
+      const [data, total] = await query.skip(skip).take(limit).getManyAndCount();
+
+      if (data.length === 0) {
+        throw new NotFoundException('No se encontraron categorías');
+      }
+
+      const pages = Math.ceil(total / limit);
+
+      return {
+        data,
+        total,
+        pages,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Error al obtener las categorías');
+    }
   }
 
   async findOne(id: string): Promise<Category> {

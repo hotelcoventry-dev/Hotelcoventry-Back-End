@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './DTO/create-category.dto';
 import { UpdateCategoryDto } from './DTO/update-category.dto';
+import { data } from '../../seed-data';
 
 @Injectable()
 export class CategoryService {
@@ -12,6 +13,19 @@ export class CategoryService {
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
   ) {}
+
+  async addCategories(): Promise<string> {
+    const categoriesNames = new Set(data.map((element) => element.category));
+    const categoriesArray = Array.from(categoriesNames);
+
+    const categories = categoriesArray.map((category) => ({
+      name: category,
+      description: `Categoría de ${category}`,
+    }));
+
+    await this.categoryRepository.upsert(categories, ['name']);
+    return 'Categorías precargadas';
+  }
 
   async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
     try {

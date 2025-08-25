@@ -10,6 +10,11 @@ import { Category } from './entities/category.entity';
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
+  @Get('seeder')
+  async addCategories(): Promise<string> {
+    return await this.categoryService.addCategories();
+  }
+
   @Post()
   @ApiOperation({ summary: 'Crear una nueva categoría' })
   @ApiBody({ type: CreateCategoryDto })

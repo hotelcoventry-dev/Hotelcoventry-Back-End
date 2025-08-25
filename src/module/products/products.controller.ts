@@ -22,6 +22,11 @@ import { ProductFilterDTO } from './DTO/product-filter.dto';
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
+  @Get('seeder')
+  async addProducts(): Promise<string> {
+    return await this.productsService.addProducts();
+  }
+
   @Post()
   @ApiOperation({ summary: 'Crear un nuevo producto' })
   @ApiBody({ type: CreateProductDto })

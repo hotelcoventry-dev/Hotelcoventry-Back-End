@@ -15,8 +15,9 @@ export class File {
   @Column()
   mimeType: string;
 
-  @Column()
+  @Column({ nullable: true })
   publicId: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

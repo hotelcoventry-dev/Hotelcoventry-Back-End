@@ -104,6 +104,23 @@ export class UsersService {
       }
     }
 
+    const existingUser = await this.usersRepository.findOne({
+      where: { EmployeeNumber: dto.EmployeeNumber },
+      withDeleted: true,
+    });
+
+    if (existingUser) {
+      if (existingUser.deletedAt) {
+        throw new BadRequestException(
+          `El usuario con el número de empleado ${dto.EmployeeNumber} existe pero está eliminado. Por favor, restaure la cuenta o use otro número de empleado.`,
+        );
+      } else {
+        throw new BadRequestException(
+          `El número de empleado ${dto.EmployeeNumber} ya está en uso. Por favor, elija otro.`,
+        );
+      }
+    }
+
     try {
       const user = this.usersRepository.create(dto);
       return await this.usersRepository.save(user);

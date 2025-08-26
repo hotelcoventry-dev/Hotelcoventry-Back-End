@@ -1,14 +1,19 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, ParseUUIDPipe, Query } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './DTO/create-category.dto';
 import { UpdateCategoryDto } from './DTO/update-category.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { Category } from './entities/category.entity';
 
 @ApiTags('Categories')
 @Controller('categories')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
+
+  @Get('seeder')
+  async addCategories(): Promise<string> {
+    return await this.categoryService.addCategories();
+  }
 
   @Post()
   @ApiOperation({ summary: 'Crear una nueva categoría' })
@@ -21,9 +26,31 @@ export class CategoryController {
 
   @Get()
   @ApiOperation({ summary: 'Obtener todas las categorías' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of categories per page (default: 3)',
+  })
+  @ApiQuery({
+    name: 'name',
+    required: false,
+    type: String,
+    description: 'Search categories by partial name match (case-insensitive)',
+  })
   @ApiResponse({ status: 200, description: 'Lista de categorías obtenida con éxito' })
-  findAll(): Promise<Category[]> {
-    return this.categoryService.findAll();
+  findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 3,
+    @Query('name') name?: string,
+  ): Promise<{ data: Category[]; total: number; pages: number }> {
+    return this.categoryService.findAll(page, limit, name);
   }
 
   @Get(':id')

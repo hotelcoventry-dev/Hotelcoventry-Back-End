@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { File } from './entities/file.entity';
@@ -71,8 +71,40 @@ export class FileUploadService {
     }
   }
 
-  async findAll(): Promise<File[]> {
-    return await this.fileRepository.find({ relations: ['product'] });
+  async findAll(page: number = 1, limit: number = 5): Promise<{ data: File[]; total: number; pages: number }> {
+    try {
+      if (page < 1) {
+        throw new BadRequestException('El número de página debe ser mayor o igual a 1');
+      }
+      if (limit < 1) {
+        throw new BadRequestException('El límite debe ser mayor o igual a 1');
+      }
+
+      const skip = (page - 1) * limit;
+
+      const [data, total] = await this.fileRepository.findAndCount({
+        relations: ['product'],
+        skip,
+        take: limit,
+      });
+
+      if (data.length === 0) {
+        throw new NotFoundException('No se encontraron imágenes');
+      }
+
+      const pages = Math.ceil(total / limit);
+
+      return {
+        data,
+        total,
+        pages,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Error al obtener las imágenes');
+    }
   }
 
   async findOne(id: string): Promise<File> {

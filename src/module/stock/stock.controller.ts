@@ -1,9 +1,9 @@
 // src/stock/stock.controller.ts
-import { Controller, Get, Post, Body, Param, Patch, Delete, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, ParseUUIDPipe, Query } from '@nestjs/common';
 import { StockService } from './stock.service';
 import { CreateStockDto } from './DTO/create-stock.dto';
 import { UpdateStockDto } from './DTO/update-stock.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { Stock } from './entities/stock.entity';
 
 @ApiTags('Stocks')
@@ -22,9 +22,24 @@ export class StockController {
 
   @Get()
   @ApiOperation({ summary: 'Obtener todos los registros de stock' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número de página (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Cantidad de registros por página (default: 10)',
+  })
   @ApiResponse({ status: 200, description: 'Lista de stocks obtenida con éxito' })
-  findAll(): Promise<Stock[]> {
-    return this.stockService.findAll();
+  findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<{ data: Stock[]; total: number; pages: number }> {
+    return this.stockService.findAll(page, limit);
   }
 
   @Get(':id')

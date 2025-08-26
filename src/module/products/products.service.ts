@@ -5,6 +5,10 @@ import { Product } from './entities/product.entity';
 import { CreateProductDto } from './DTO/createProduct.dto';
 import { UpdateProductDto } from './DTO/updateProduct.dto';
 import { Category } from '../categories/entities/category.entity';
+import { data } from '../../seed-data';
+import { File } from '../file-upload/entities/file.entity';
+import { Stock } from '../stock/entities/stock.entity';
+import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class ProductsService {
@@ -14,6 +18,37 @@ export class ProductsService {
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
   ) {}
+
+  async addProducts(): Promise<string> {
+    const categories: Category[] = await this.categoryRepository.find();
+
+    const products: Product[] = data.map((element) => {
+      const category: Category | undefined = categories.find((category) => element.category === category.name);
+
+      const newProduct = new Product();
+      newProduct.name = element.name;
+      newProduct.description = element.description;
+      newProduct.price = element.price;
+      newProduct.category = category!;
+
+      const file = new File();
+      file.fileName = element.img;
+      file.url = element.img;
+      file.mimeType = 'image/jpeg';
+      file.publicId = uuid();
+      newProduct.files = [file];
+
+      const stock = new Stock();
+      stock.quantity = element.initialStock;
+      stock.min_quantity = element.minStock;
+      newProduct.stock = [stock];
+
+      return newProduct;
+    });
+
+    await this.productRepository.save(products);
+    return 'Productos precargados';
+  }
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
     const queryRunner = this.productRepository.manager.connection.createQueryRunner();
